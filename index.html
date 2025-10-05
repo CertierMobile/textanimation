@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="visit-counter">
+        Visits: <span id="visitCount">0</span>
+    </div>
+
     <div class="container">
         <h1>✨ Text Animation Creator</h1>
         
@@ -68,4 +72,25 @@
             <label for="fadeSpeed">Fade In/Out Speed:</label>
             <select id="fadeSpeed">
                 <option value="slow">Slow</option>
-                <option value="medium" select
+                <option value="medium" selected>Medium</option>
+                <option value="fast">Fast</option>
+            </select>
+        </div>
+
+        <button class="btn" id="renderBtn">Generate Animation</button>
+        <button class="btn download-btn" id="downloadBtn">Download Video</button>
+
+        <div class="status" id="status"></div>
+
+        <div class="preview-container">
+            <canvas id="preview"></canvas>
+        </div>
+
+        <div class="copyright">
+            © Certier 2025
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
