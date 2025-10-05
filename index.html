@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Text Animation Creator</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Text & Image Animation Creator</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?
@@ -16,49 +17,53 @@
   family=Press+Start+2P&
   family=Bungee&
   family=Rubik+Mono+One&
-  family=Tilt+Warp&
   family=Luckiest+Guy&
   family=Pacifico&
   family=Chakra+Petch&
-  family=VT323&
-  display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  family=VT323&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="visit-counter">
-    Visits: <span id="visitCount">0</span>
-  </div>
-
   <div class="container">
-    <h1>✨ Text Animation Creator</h1>
+    <h1>✨ Animation Creator</h1>
 
-    <div class="input-group">
-      <label for="textInput">Enter Your Text:</label>
-      <input type="text" id="textInput" placeholder="Type something awesome..." maxlength="100">
+    <div class="input-row">
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="text">Text</option>
+        <option value="image">Image</option>
+      </select>
     </div>
 
-    <div class="input-group">
-      <label for="fontStyle">Choose Font:</label>
+    <div class="input-row" id="textInputGroup">
+      <label for="textInput">Text</label>
+      <input id="textInput" type="text" placeholder="Type something..." maxlength="100">
+    </div>
+
+    <div class="input-row" id="imageInputGroup" style="display:none;">
+      <label for="imageInput">Image (local)</label>
+      <input id="imageInput" type="file" accept="image/*">
+    </div>
+
+    <div class="input-row">
+      <label for="fontStyle">Font</label>
       <select id="fontStyle">
-        <option>Orbitron</option>
-        <option>Bebas Neue</option>
-        <option>Righteous</option>
-        <option>Russo One</option>
-        <option>Audiowide</option>
-        <option>Monoton</option>
-        <option>Press Start 2P</option>
-        <option>Bungee</option>
-        <option>Rubik Mono One</option>
-        <option>Tilt Warp</option>
-        <option>Luckiest Guy</option>
-        <option>Pacifico</option>
-        <option>Chakra Petch</option>
+        <option>Orbitron</option><option>Bebas Neue</option><option>Righteous</option>
+        <option>Russo One</option><option>Audiowide</option><option>Monoton</option>
+        <option>Press Start 2P</option><option>Bungee</option><option>Rubik Mono One</option>
+        <option>Luckiest Guy</option><option>Pacifico</option><option>Chakra Petch</option>
         <option>VT323</option>
       </select>
     </div>
 
-    <div class="input-group">
-      <label for="animationStyle">Choose Animation:</label>
+    <div class="input-row">
+      <label for="textColor">Text / Glow Color</label>
+      <input id="textColor" type="color" value="#ffffff">
+    </div>
+
+    <div class="input-row">
+      <label for="animationStyle">Animation Style</label>
       <select id="animationStyle">
         <option value="left">Swipe Left</option>
         <option value="right">Swipe Right</option>
@@ -73,38 +78,54 @@
       </select>
     </div>
 
-    <div class="input-group">
-      <label for="bgImage">Optional Background Image:</label>
-      <input type="file" id="bgImage" accept="image/*">
+    <div class="input-row small">
+      <label>Shadow</label>
+      <input id="shadowToggle" type="checkbox" checked>
+      <label style="margin-left:12px">Glow</label>
+      <input id="glowToggle" type="checkbox">
     </div>
 
-    <div class="input-group">
-      <label for="duration">Animation Duration (seconds):</label>
-      <input type="number" id="duration" min="1" max="10" step="0.5" value="3">
+    <div class="input-row">
+      <label for="duration">Duration (s)</label>
+      <input id="duration" type="number" min="1" max="12" step="0.5" value="3">
     </div>
 
-    <div class="input-group">
-      <label for="fadeSpeed">Fade Speed:</label>
-      <select id="fadeSpeed">
-        <option value="slow">Slow</option>
-        <option value="medium" selected>Medium</option>
-        <option value="fast">Fast</option>
-      </select>
+    <hr>
+
+    <h3 style="margin:10px 0 6px">Audio</h3>
+
+    <div class="input-row">
+      <label for="soundSelect">Built-in sound (100 presets)</label>
+      <select id="soundSelect"></select>
     </div>
 
-    <button class="btn" id="renderBtn">Generate Animation</button>
-    <button class="btn download-btn" id="downloadBtn">Download Video</button>
+    <div class="input-row">
+      <label for="uploadAudio">Or upload audio (mp3/wav)</label>
+      <input id="uploadAudio" type="file" accept="audio/*">
+    </div>
 
-    <div class="status" id="status"></div>
+    <div class="input-row small">
+      <label for="volume">Volume</label>
+      <input id="volume" type="range" min="0" max="1" step="0.01" value="0.9">
+      <button id="previewSound" class="btn-inline">Preview Sound</button>
+    </div>
+
+    <div class="input-row">
+      <button id="renderBtn" class="btn">Generate & Export (webm)</button>
+      <div id="status" class="status"></div>
+    </div>
 
     <div class="preview-container">
       <canvas id="preview"></canvas>
     </div>
 
-    <div class="copyright">
-      © Certier 2025
-    </div>
   </div>
+
+  <div class="visit-counter">
+    Visits: <span id="visitCount">0</span>
+  </div>
+
+  <div class="copyright">© Certier 2025</div>
 
   <script src="script.js"></script>
 </body>
