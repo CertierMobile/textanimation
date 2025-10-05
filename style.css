@@ -46,6 +46,22 @@ label {
     font-size: 1.1em;
 }
 
+input[type="text"], select {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 input[type="number"] {
     width: 100%;
     padding: 15px;
