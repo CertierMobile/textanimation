@@ -150,3 +150,13 @@ select {
 .download-btn:hover {
     box-shadow: 0 10px 25px rgba(56, 239, 125, 0.4);
 }
+
+.copyright {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #e0e0e0;
+    color: #888;
+    font-size: 0.9em;
+    font-weight: 500;
+}
