@@ -1,4 +1,10 @@
 const textInput = document.getElementById('textInput');
+const contentType = document.getElementById('contentType');
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const textGroup = document.getElementById('textGroup');
+const imageGroup = document.getElementById('imageGroup');
+const fontGroup = document.getElementById('fontGroup');
 const fontStyle = document.getElementById('fontStyle');
 const animationStyle = document.getElementById('animationStyle');
 const duration = document.getElementById('duration');
@@ -14,9 +20,41 @@ let recordedChunks = [];
 let animationFrameId;
 let audioContext;
 let soundPlayed = false;
+let uploadedImage = null;
 
 canvas.width = 1920;
 canvas.height = 1080;
+
+// Handle content type switching
+contentType.addEventListener('change', function() {
+    if (this.value === 'text') {
+        textGroup.style.display = 'block';
+        fontGroup.style.display = 'block';
+        imageGroup.style.display = 'none';
+    } else {
+        textGroup.style.display = 'none';
+        fontGroup.style.display = 'none';
+        imageGroup.style.display = 'block';
+    }
+});
+
+// Handle image upload
+imageInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                uploadedImage = img;
+                imagePreview.innerHTML = '';
+                imagePreview.appendChild(img);
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
 
 // Initialize Audio Context
 function initAudio() {
@@ -43,7 +81,6 @@ function playWhooshSound(type) {
     const now = audioContext.currentTime;
     
     if (type === 'left' || type === 'right') {
-        // Horizontal whoosh - sweeping frequency
         oscillator.type = 'sawtooth';
         oscillator.frequency.setValueAtTime(800, now);
         oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.4);
@@ -55,7 +92,6 @@ function playWhooshSound(type) {
         gainNode.gain.setValueAtTime(0.3, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
     } else if (type === 'top' || type === 'bottom') {
-        // Vertical swipe - different frequency pattern
         oscillator.type = 'sawtooth';
         oscillator.frequency.setValueAtTime(600, now);
         oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.35);
@@ -67,7 +103,6 @@ function playWhooshSound(type) {
         gainNode.gain.setValueAtTime(0.25, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
     } else if (type === 'zoom') {
-        // Zoom sound - rising pitch
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(100, now);
         oscillator.frequency.exponentialRampToValueAtTime(800, now + 0.5);
@@ -79,7 +114,6 @@ function playWhooshSound(type) {
         gainNode.gain.setValueAtTime(0.2, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
     } else if (type === 'fade') {
-        // Fade sound - soft shimmer
         oscillator.type = 'triangle';
         oscillator.frequency.setValueAtTime(440, now);
         oscillator.frequency.setValueAtTime(880, now + 0.3);
@@ -113,67 +147,139 @@ function getFadeSpeedMultiplier() {
     }
 }
 
-function drawFrame(progress, text, style, font, fadeMultiplier) {
+function drawFrame(progress, content, style, font, fadeMultiplier, isImage = false) {
     ctx.fillStyle = '#00ff00';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.font = `bold 120px "${font}"`;
-    ctx.fillStyle = 'white';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    ctx.shadowBlur = 15;
-    ctx.shadowOffsetX = 5;
-    ctx.shadowOffsetY = 5;
-
-    const textWidth = ctx.measureText(text).width;
-    const centerX = canvas.width / 2 - textWidth / 2;
-    const centerY = canvas.height / 2 + 40;
-
-    let x = centerX;
-    let y = centerY;
-    let alpha = 1;
-    let scale = 1;
-
     const easeProgress = 1 - Math.pow(1 - progress, 3);
-    
-    // Adjusted fade for fade-based animations
     let fadeProgress = Math.min(progress * fadeMultiplier, 1);
 
-    switch(style) {
-        case 'left':
-            x = -textWidth + (centerX + textWidth) * easeProgress;
-            alpha = fadeProgress;
-            break;
-        case 'right':
-            x = canvas.width + (centerX - canvas.width) * easeProgress;
-            alpha = fadeProgress;
-            break;
-        case 'top':
-            y = -100 + (centerY + 100) * easeProgress;
-            alpha = fadeProgress;
-            break;
-        case 'bottom':
-            y = canvas.height + (centerY - canvas.height) * easeProgress;
-            alpha = fadeProgress;
-            break;
-        case 'fade':
-            alpha = fadeProgress;
-            break;
-        case 'zoom':
-            scale = 0.1 + 0.9 * easeProgress;
-            alpha = fadeProgress;
-            break;
-    }
-
-    ctx.globalAlpha = alpha;
-    
-    if (style === 'zoom') {
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.scale(scale, scale);
-        ctx.fillText(text, -textWidth / 2, 40);
-        ctx.restore();
+    if (isImage && content) {
+        // Image rendering
+        const maxWidth = canvas.width * 0.8;
+        const maxHeight = canvas.height * 0.8;
+        
+        let imgWidth = content.width;
+        let imgHeight = content.height;
+        
+        // Scale image to fit within bounds
+        const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
+        imgWidth *= scale;
+        imgHeight *= scale;
+        
+        const centerX = canvas.width / 2 - imgWidth / 2;
+        const centerY = canvas.height / 2 - imgHeight / 2;
+        
+        let x = centerX;
+        let y = centerY;
+        let alpha = 1;
+        let imgScale = 1;
+        
+        switch(style) {
+            case 'left':
+                x = -imgWidth + (centerX + imgWidth) * easeProgress;
+                alpha = fadeProgress;
+                break;
+            case 'right':
+                x = canvas.width + (centerX - canvas.width) * easeProgress;
+                alpha = fadeProgress;
+                break;
+            case 'top':
+                y = -imgHeight + (centerY + imgHeight) * easeProgress;
+                alpha = fadeProgress;
+                break;
+            case 'bottom':
+                y = canvas.height + (centerY - canvas.height) * easeProgress;
+                alpha = fadeProgress;
+                break;
+            case 'fade':
+                alpha = fadeProgress;
+                break;
+            case 'zoom':
+                imgScale = 0.1 + 0.9 * easeProgress;
+                alpha = fadeProgress;
+                break;
+        }
+        
+        ctx.globalAlpha = alpha;
+        
+        if (style === 'zoom') {
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(imgScale, imgScale);
+            ctx.drawImage(content, -imgWidth / 2, -imgHeight / 2, imgWidth, imgHeight);
+            ctx.restore();
+        } else {
+            ctx.drawImage(content, x, y, imgWidth, imgHeight);
+        }
+        
     } else {
-        ctx.fillText(text, x, y);
+        // Text rendering
+        let baseFontSize = 120;
+        let fontSize = baseFontSize;
+        
+        ctx.font = `bold ${baseFontSize}px "${font}"`;
+        let textWidth = ctx.measureText(content).width;
+        
+        const maxWidth = canvas.width * 0.9;
+        if (textWidth > maxWidth) {
+            fontSize = Math.floor((maxWidth / textWidth) * baseFontSize);
+            fontSize = Math.max(fontSize, 30);
+        }
+        
+        ctx.font = `bold ${fontSize}px "${font}"`;
+        ctx.fillStyle = 'white';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+
+        textWidth = ctx.measureText(content).width;
+        const centerX = canvas.width / 2 - textWidth / 2;
+        const centerY = canvas.height / 2 + (fontSize / 3);
+
+        let x = centerX;
+        let y = centerY;
+        let alpha = 1;
+        let scale = 1;
+
+        switch(style) {
+            case 'left':
+                x = -textWidth + (centerX + textWidth) * easeProgress;
+                alpha = fadeProgress;
+                break;
+            case 'right':
+                x = canvas.width + (centerX - canvas.width) * easeProgress;
+                alpha = fadeProgress;
+                break;
+            case 'top':
+                y = -fontSize + (centerY + fontSize) * easeProgress;
+                alpha = fadeProgress;
+                break;
+            case 'bottom':
+                y = canvas.height + (centerY - canvas.height) * easeProgress;
+                alpha = fadeProgress;
+                break;
+            case 'fade':
+                alpha = fadeProgress;
+                break;
+            case 'zoom':
+                scale = 0.1 + 0.9 * easeProgress;
+                alpha = fadeProgress;
+                break;
+        }
+
+        ctx.globalAlpha = alpha;
+        
+        if (style === 'zoom') {
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(scale, scale);
+            ctx.fillText(content, -textWidth / 2, fontSize / 3);
+            ctx.restore();
+        } else {
+            ctx.fillText(content, x, y);
+        }
     }
 
     ctx.globalAlpha = 1;
@@ -181,14 +287,28 @@ function drawFrame(progress, text, style, font, fadeMultiplier) {
 }
 
 async function generateAnimation() {
-    const text = textInput.value.trim();
-    if (!text) {
-        showStatus('Please enter some text!', 'error');
-        return;
+    const isImageMode = contentType.value === 'image';
+    
+    let content;
+    let font = fontStyle.value;
+    let isImage = false;
+    
+    if (isImageMode) {
+        if (!uploadedImage) {
+            showStatus('Please upload an image!', 'error');
+            return;
+        }
+        content = uploadedImage;
+        isImage = true;
+    } else {
+        content = textInput.value.trim();
+        if (!content) {
+            showStatus('Please enter some text!', 'error');
+            return;
+        }
     }
 
     const style = animationStyle.value;
-    const font = fontStyle.value;
     const animDuration = parseFloat(duration.value) * 1000;
     const fadeMultiplier = getFadeSpeedMultiplier();
     
@@ -198,7 +318,6 @@ async function generateAnimation() {
     soundPlayed = false;
     showStatus('Rendering animation...', 'info');
 
-    // Play sound effect
     playWhooshSound(style);
 
     const stream = canvas.captureStream(30);
@@ -219,7 +338,7 @@ async function generateAnimation() {
         downloadBtn.onclick = () => {
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'text-animation.webm';
+            a.download = 'animation.webm';
             a.click();
         };
         downloadBtn.style.display = 'block';
@@ -236,7 +355,7 @@ async function generateAnimation() {
     function animate() {
         if (frame <= totalFrames) {
             const progress = frame / totalFrames;
-            drawFrame(progress, text, style, font, fadeMultiplier);
+            drawFrame(progress, content, style, font, fadeMultiplier, isImage);
             frame++;
             animationFrameId = requestAnimationFrame(animate);
         } else {
@@ -251,4 +370,4 @@ async function generateAnimation() {
 
 renderBtn.addEventListener('click', generateAnimation);
 
-drawFrame(1, 'Preview', 'fade', 'Arial', 1);
+drawFrame(1, 'Preview
