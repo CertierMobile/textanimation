@@ -1,113 +1,97 @@
+const canvas = document.getElementById('preview');
+const ctx = canvas.getContext('2d');
+canvas.width = 1920;
+canvas.height = 1080;
+
 const textInput = document.getElementById('textInput');
-const contentType = document.getElementById('contentType');
-const imageInput = document.getElementById('imageInput');
-const imagePreview = document.getElementById('imagePreview');
-const textGroup = document.getElementById('textGroup');
-const imageGroup = document.getElementById('imageGroup');
-const fontGroup = document.getElementById('fontGroup');
 const fontStyle = document.getElementById('fontStyle');
 const animationStyle = document.getElementById('animationStyle');
 const duration = document.getElementById('duration');
 const fadeSpeed = document.getElementById('fadeSpeed');
+const bgImageInput = document.getElementById('bgImage');
 const renderBtn = document.getElementById('renderBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const status = document.getElementById('status');
-const canvas = document.getElementById('preview');
-const ctx = canvas.getContext('2d');
 const visitCountElement = document.getElementById('visitCount');
 
-let mediaRecorder;
-let recordedChunks = [];
-let animationFrameId;
-let audioContext;
-let soundPlayed = false;
-let uploadedImage = null;
+let bgImage = null;
 
-canvas.width = 1920;
-canvas.height = 1080;
-
-// Visit counter functionality
-function updateVisitCounter() {
-    let visits = parseInt(localStorage.getItem('visitCount') || '0');
-    visits++;
-    localStorage.setItem('visitCount', visits.toString());
-    visitCountElement.textContent = visits;
-}
-
-// Initialize visit counter on page load
-updateVisitCounter();
-
-// Handle content type switching
-contentType.addEventListener('change', function() {
-    if (this.value === 'text') {
-        textGroup.style.display = 'block';
-        fontGroup.style.display = 'block';
-        imageGroup.style.display = 'none';
-    } else {
-        textGroup.style.display = 'none';
-        fontGroup.style.display = 'none';
-        imageGroup.style.display = 'block';
-    }
+// Load background image
+bgImageInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) {
+    const img = new Image();
+    img.onload = () => bgImage = img;
+    img.src = URL.createObjectURL(file);
+  }
 });
 
-// Handle image upload
-imageInput.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                uploadedImage = img;
-                imagePreview.innerHTML = '';
-                imagePreview.appendChild(img);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-});
+// Visit counter
+let visits = parseInt(localStorage.getItem('visitCount') || '0');
+visits++;
+localStorage.setItem('visitCount', visits);
+visitCountElement.textContent = visits;
 
-// Initialize Audio Context
-function initAudio() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
+function drawFrame(progress, text, anim, font) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (bgImage) ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+  const fontSize = 160;
+  ctx.font = `bold ${fontSize}px "${font}"`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+
+  const x = canvas.width / 2;
+  const y = canvas.height / 2;
+  let alpha = 1;
+  let scale = 1;
+  let offsetX = 0;
+  let offsetY = 0;
+  let rotation = 0;
+
+  const ease = 1 - Math.pow(1 - progress, 3);
+
+  switch (anim) {
+    case 'left': offsetX = -canvas.width / 2 + ease * canvas.width / 2; break;
+    case 'right': offsetX = canvas.width / 2 - ease * canvas.width / 2; break;
+    case 'top': offsetY = -canvas.height / 2 + ease * canvas.height / 2; break;
+    case 'bottom': offsetY = canvas.height / 2 - ease * canvas.height / 2; break;
+    case 'fade': alpha = ease; break;
+    case 'zoom': scale = 0.2 + ease * 0.8; break;
+    case 'rotate': rotation = ease * Math.PI * 2; break;
+    case 'bounce': offsetY = Math.sin(ease * Math.PI * 2) * 80 * (1 - ease); break;
+    case 'wave': offsetY = Math.sin(ease * 6) * 50; break;
+    case 'typewriter':
+      const chars = Math.floor(ease * text.length);
+      text = text.substring(0, chars);
+      break;
+  }
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x + offsetX, y + offsetY);
+  ctx.rotate(rotation);
+  ctx.scale(scale, scale);
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
 }
 
-// Generate whoosh sound effect
-function playWhooshSound(type) {
-    if (soundPlayed) return;
-    soundPlayed = true;
-    
-    initAudio();
-    
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    const filter = audioContext.createBiquadFilter();
-    
-    oscillator.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    const now = audioContext.currentTime;
-    
-    if (type === 'left' || type === 'right') {
-        oscillator.type = 'sawtooth';
-        oscillator.frequency.setValueAtTime(800, now);
-        oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.4);
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(2000, now);
-        filter.frequency.exponentialRampToValueAtTime(400, now + 0.4);
-        
-        gainNode.gain.setValueAtTime(0.3, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-    } else if (type === 'top' || type === 'bottom') {
-        oscillator.type = 'sawtooth';
-        oscillator.frequency.setValueAtTime(600, now);
-        oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.35);
-        
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1500, now);
-        filter.frequency.exponentia
+function startAnimation() {
+  const text = textInput.value || 'Hello World!';
+  const anim = animationStyle.value;
+  const font = fontStyle.value;
+  const dur = parseFloat(duration.value);
+  let start = null;
+
+  function animate(ts) {
+    if (!start) start = ts;
+    const elapsed = (ts - start) / 1000;
+    const progress = Math.min(elapsed / dur, 1);
+    drawFrame(progress, text, anim, font);
+    if (progress < 1) requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+renderBtn.addEventListener('click', startAnimation);
