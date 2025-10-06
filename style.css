@@ -1,9 +1,11 @@
+/* ===== Base Reset ===== */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* ===== Body & Background ===== */
 body {
   background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
   color: #e0e6ed;
@@ -31,6 +33,7 @@ body::before {
   z-index: 0;
 }
 
+/* ===== Container ===== */
 .container {
   background: rgba(15, 20, 35, 0.85);
   backdrop-filter: blur(10px);
@@ -46,13 +49,13 @@ body::before {
   z-index: 1;
 }
 
+/* ===== Title ===== */
 h1 {
   font-size: 2.5em;
   font-weight: 900;
   background: linear-gradient(135deg, #00ffff 0%, #00d4ff 50%, #0099ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
   text-align: center;
   margin-bottom: 35px;
   letter-spacing: 2px;
@@ -71,6 +74,7 @@ h1::after {
   background: linear-gradient(90deg, transparent, #00ffff, transparent);
 }
 
+/* ===== Mode Selector ===== */
 .mode-selector {
   display: flex;
   gap: 15px;
@@ -106,6 +110,7 @@ h1::after {
   box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
 }
 
+/* ===== Input Sections ===== */
 .input-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -162,6 +167,7 @@ input[type="color"] {
   cursor: pointer;
 }
 
+/* ===== Upload Zone ===== */
 .upload-zone {
   padding: 30px;
   background: rgba(10, 15, 30, 0.6);
@@ -204,6 +210,7 @@ input[type="color"] {
   color: #00d4ff;
 }
 
+/* ===== Checkboxes ===== */
 .checkbox-group {
   display: flex;
   gap: 25px;
@@ -217,7 +224,6 @@ input[type="color"] {
   cursor: pointer;
   color: #e0e6ed;
   font-size: 0.9em;
-  text-transform: none;
 }
 
 input[type="checkbox"] {
@@ -227,6 +233,7 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
+/* ===== Buttons ===== */
 .btn {
   width: 100%;
   padding: 16px;
@@ -262,12 +269,14 @@ input[type="checkbox"] {
   text-decoration: none;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
+  transition: all 0.3s ease;
 }
 
 .download-btn:hover {
   box-shadow: 0 6px 30px rgba(0, 255, 136, 0.5);
 }
 
+/* ===== Status & Preview ===== */
 .status {
   text-align: center;
   margin-top: 15px;
@@ -293,47 +302,25 @@ input[type="checkbox"] {
   height: 450px;
   display: block;
   background: #00ff00;
+  object-fit: contain;
 }
 
+/* ===== Hidden ===== */
 .hidden {
   display: none;
 }
 
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
-  .input-section {
-    grid-template-columns: 1fr;
-  }
-  
-  .mode-selector {
-    flex-direction: column;
-  }
-  
-  h1 {
-    font-size: 1.8em;
-  }
-  
-  .container {
-    padding: 20px;
-  }
-  
-  .checkbox-group {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
+  .input-section { grid-template-columns: 1fr; }
+  .mode-selector { flex-direction: column; }
+  h1 { font-size: 1.8em; }
+  .container { padding: 20px; }
+  .checkbox-group { flex-direction: column; align-items: flex-start; gap: 15px; }
 }
 
 @media (max-width: 480px) {
-  h1 {
-    font-size: 1.5em;
-  }
-  
-  .btn {
-    font-size: 1em;
-    padding: 14px;
-  }
-  
-  #preview {
-    height: 300px;
-  }
+  h1 { font-size: 1.5em; }
+  .btn { font-size: 1em; padding: 14px; }
+  #preview { height: 300px; }
 }
