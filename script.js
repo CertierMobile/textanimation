@@ -1,6 +1,3 @@
-import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/ffmpeg.js';
-import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
-
 const canvas = document.getElementById("preview");
 const ctx = canvas.getContext("2d");
 const renderBtn = document.getElementById("renderBtn");
@@ -24,38 +21,6 @@ canvas.width = 1920;
 canvas.height = 1080;
 let uploadedImage = null;
 let currentMode = 'text';
-let ffmpeg = null;
-
-// Initialize FFmpeg
-async function initFFmpeg() {
-  if (ffmpeg) return ffmpeg;
-  
-  ffmpeg = new FFmpeg();
-  
-  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
-  
-  ffmpeg.on('log', ({ message }) => {
-    console.log(message);
-  });
-  
-  ffmpeg.on('progress', ({ progress }) => {
-    if (progress > 0 && progress < 1) {
-      status.textContent = `🔄 Converting to MP4... ${Math.round(progress * 100)}%`;
-    }
-  });
-
-  try {
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    });
-    console.log('FFmpeg loaded successfully');
-    return ffmpeg;
-  } catch (error) {
-    console.error('Failed to load FFmpeg:', error);
-    throw error;
-  }
-}
 
 // Cursive fonts for flicker effect
 const cursiveFonts = [
@@ -204,7 +169,7 @@ function drawFrame(progress, flickerFont = null) {
   }
 }
 
-// Main render function
+// Main render function - WebM only
 renderBtn.addEventListener("click", async () => {
   if (currentMode === "image" && !uploadedImage) { 
     status.textContent = "⚠️ Upload an image first!"; 
@@ -212,22 +177,21 @@ renderBtn.addEventListener("click", async () => {
   }
 
   renderBtn.disabled = true;
-  status.textContent = "⚙️ Initializing FFmpeg...";
+  status.textContent = "⚙️ Generating WebM video...";
   downloadBtn.style.display = "none";
 
   try {
-    // Initialize FFmpeg
-    await initFFmpeg();
-    
-    status.textContent = "⚙️ Generating video...";
-    
     const duration = parseFloat(durationInput.value);
     const fps = 30;
     
-    // Check for WebM support
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') 
-      ? 'video/webm;codecs=vp9' 
-      : 'video/webm';
+    // Try different WebM codecs for better compatibility
+    let mimeType = 'video/webm;codecs=vp9';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/webm;codecs=vp8';
+    }
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/webm';
+    }
     
     const stream = canvas.captureStream(fps);
     const recorder = new MediaRecorder(stream, { 
@@ -240,50 +204,15 @@ renderBtn.addEventListener("click", async () => {
       if(e.data.size > 0) chunks.push(e.data); 
     };
 
-    recorder.onstop = async () => {
-      try {
-        status.textContent = "🔄 Converting to MP4...";
-        
-        const webmBlob = new Blob(chunks, { type: 'video/webm' });
-        
-        // Write WebM file to FFmpeg filesystem
-        await ffmpeg.writeFile('input.webm', await fetchFile(webmBlob));
-        
-        // Convert WebM to MP4
-        await ffmpeg.exec([
-          '-i', 'input.webm',
-          '-c:v', 'libx264',
-          '-preset', 'fast',
-          '-crf', '23',
-          '-pix_fmt', 'yuv420p',
-          '-movflags', '+faststart',
-          'output.mp4'
-        ]);
+    recorder.onstop = () => {
+      const webmBlob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(webmBlob);
 
-        // Read the output file
-        const data = await ffmpeg.readFile('output.mp4');
-        const mp4Blob = new Blob([data], { type: 'video/mp4' });
-        const url = URL.createObjectURL(mp4Blob);
-
-        downloadBtn.href = url;
-        downloadBtn.download = 'animation.mp4';
-        downloadBtn.style.display = "inline-block";
-        status.textContent = "✅ MP4 ready! Click to download.";
-        
-        // Clean up FFmpeg files
-        try {
-          await ffmpeg.deleteFile('input.webm');
-          await ffmpeg.deleteFile('output.mp4');
-        } catch (cleanupError) {
-          console.warn('Cleanup warning:', cleanupError);
-        }
-        
-      } catch(conversionError) {
-        console.error('Conversion error:', conversionError);
-        status.textContent = "❌ MP4 conversion failed! Check console for details.";
-      } finally {
-        renderBtn.disabled = false;
-      }
+      downloadBtn.href = url;
+      downloadBtn.download = 'animation.webm';
+      downloadBtn.style.display = "inline-block";
+      status.textContent = "✅ WebM ready! Click to download.";
+      renderBtn.disabled = false;
     };
 
     recorder.start(100);
