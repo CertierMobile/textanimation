@@ -1,67 +1,106 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Text Animator</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text & Image Animation Creator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Bebas+Neue&family=Righteous&family=Russo+One&family=Audiowide&family=Monoton&family=Press+Start+2P&family=Bungee&family=Pacifico&family=Great+Vibes&family=Dancing+Script&family=Allura&family=Playball&family=Satisfy&family=Parisienne&family=Merriweather:wght@700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="wrap">
-    <h1>Text / Image Animator</h1>
+  <div class="container">
+    <h1>✨ Animation Creator</h1>
 
-    <div class="controls">
-      <label>Mode:
-        <select id="mode">
-          <option value="text">Text</option>
-          <option value="image">Image</option>
-        </select>
-      </label>
-
-      <div id="textOptions">
-        <label>Text: <input id="textInput" type="text" placeholder="Enter text" /></label>
-        <label>Font Style:
-          <select id="fontStyle">
-            <option>Arial</option>
-            <option>Roboto</option>
-            <option>Montserrat</option>
-            <option>Oswald</option>
-            <option>Lobster</option>
-          </select>
-        </label>
-        <label>Animation:
-          <select id="animationStyle">
-            <option value="top">Top</option>
-            <option value="bottom">Bottom</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-            <option value="zoom">Zoom</option>
-            <option value="fade">Fade</option>
-          </select>
-        </label>
-        <label>Flicker Speed:
-          <input type="range" id="flickerSpeed" min="1" max="10" value="5" />
-        </label>
-        <label>Duration (sec): <input id="duration" type="number" value="3" /></label>
-        <label>Color: <input id="textColor" type="color" value="#ffffff" /></label>
-        <label><input type="checkbox" id="shadow" /> Shadow</label>
-        <label><input type="checkbox" id="glow" /> Glow</label>
-      </div>
-
-      <div id="imageOptions" style="display:none;">
-        <label>Upload Image: <input id="imageUpload" type="file" accept="image/*" /></label>
-      </div>
-
-      <label>Sound: <input id="soundUpload" type="file" accept="audio/*" /></label>
+    <div class="input-group">
+      <label for="mode">Mode:</label>
+      <select id="mode">
+        <option value="text" selected>Text</option>
+        <option value="image">Image</option>
+      </select>
     </div>
 
-    <button id="renderBtn">Render Animation</button>
-    <p id="status"></p>
-    <button id="downloadBtn" style="display:none;">Download</button>
+    <div id="textOptions">
+      <div class="input-group">
+        <label for="textInput">Text:</label>
+        <input type="text" id="textInput" placeholder="Enter text...">
+      </div>
 
-    <canvas id="preview"></canvas>
-  </main>
+      <div class="input-group">
+        <label for="fontStyle">Font:</label>
+        <select id="fontStyle">
+          <option value="Orbitron">Orbitron</option>
+          <option value="Bebas Neue">Bebas Neue</option>
+          <option value="Righteous">Righteous</option>
+          <option value="Russo One">Russo One</option>
+          <option value="Audiowide">Audiowide</option>
+          <option value="Monoton">Monoton</option>
+          <option value="Press Start 2P">Press Start 2P</option>
+          <option value="Bungee">Bungee</option>
+          <option value="Arial">Arial</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label for="textColor">Text Color:</label>
+        <input type="color" id="textColor" value="#ffffff">
+      </div>
+    </div>
+
+    <div id="imageOptions" style="display:none;">
+      <div class="input-group">
+        <label for="imageUpload">Upload Image:</label>
+        <input type="file" id="imageUpload" accept="image/*">
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label for="animationStyle">Animation:</label>
+      <select id="animationStyle">
+        <option value="left">Left to Center</option>
+        <option value="right">Right to Center</option>
+        <option value="top">Top to Center</option>
+        <option value="bottom">Bottom to Center</option>
+        <option value="fade">Fade In</option>
+        <option value="zoom">Zoom In</option>
+        <option value="none">No Animation</option>
+        <option value="fontflicker">Font Flicker</option>
+      </select>
+    </div>
+
+    <div class="input-group flicker-speed">
+      <label for="flickerSpeed">Flicker Speed (ms):</label>
+      <input type="number" id="flickerSpeed" value="100" min="10" step="10">
+    </div>
+
+    <div class="input-group">
+      <label for="duration">Duration (s):</label>
+      <input type="number" id="duration" min="1" max="10" step="0.5" value="3">
+    </div>
+
+    <div class="input-group">
+      <label for="shadow">Shadow:</label>
+      <input type="checkbox" id="shadow" checked>
+      <label for="glow">Glow:</label>
+      <input type="checkbox" id="glow" checked>
+    </div>
+
+    <div class="input-group">
+      <label for="soundUpload">Custom Sound (.mp3/.wav):</label>
+      <input type="file" id="soundUpload" accept="audio/*">
+    </div>
+
+    <button id="renderBtn" class="btn">Generate</button>
+    <button id="downloadBtn" class="btn download-btn">Download Video</button>
+
+    <div class="status" id="status"></div>
+    <div class="preview-container">
+      <canvas id="preview"></canvas>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
