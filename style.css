@@ -74,6 +74,9 @@ select:focus {
   color: white;
   margin-top: 10px;
   transition: all 0.2s ease;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
 }
 
 .btn:hover {
