@@ -6,7 +6,7 @@
   <title>Text & Image Animation Creator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Great+Vibes&family=Dancing+Script&family=Allura&family=Playball&family=Satisfy&family=Parisienne&family=Merriweather:wght@700&family=Cinzel:wght@700&family=Orbitron&family=Bebas+Neue&family=Righteous&family=Russo+One&family=Audiowide&family=Monoton&family=Press+Start+2P&family=Bungee&family=Arial&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Great+Vibes&family=Dancing+Script&family=Allura&family=Playball&family=Satisfy&family=Parisienne&family=Cookie&family=Courgette&family=Kaushan+Script&family=Permanent+Marker&family=Caveat&family=Indie+Flower&family=Shadows+Into+Light&family=Amatic+SC&family=Patrick+Hand&family=Architects+Daughter&family=Homemade+Apple&family=Nothing+You+Could+Do&family=Covered+By+Your+Grace&family=Rock+Salt&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Schoolbell&family=Crafty+Girls&family=Coming+Soon&family=Walter+Turncoat&family=Sue+Ellen+Francisco&family=Marck+Script&family=Damion&family=Sacramento&family=Tangerine&family=Pinyon+Script&family=Italianno&family=Yesteryear&family=Euphoria+Script&family=Aguafina+Script&family=Engagement&family=Mea+Culpa&family=Meie+Script&family=Mr+De+Haviland&family=Mr+Dafoe&family=Mrs+Saint+Delafield&family=Rouge+Script&family=Herr+Von+Muellerhoff&family=Merriweather:wght@700&family=Cinzel:wght@700&family=Orbitron&family=Bebas+Neue&family=Righteous&family=Russo+One&family=Audiowide&family=Monoton&family=Press+Start+2P&family=Bungee&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,13 +24,12 @@
     <div id="textOptions">
       <div class="input-group">
         <label for="textInput">Text:</label>
-        <input type="text" id="textInput" placeholder="Enter text...">
+        <input type="text" id="textInput" placeholder="Enter text..." value="Hello World">
       </div>
 
       <div class="input-group">
         <label for="fontStyle">Font:</label>
         <select id="fontStyle">
-          <!-- Original favorites -->
           <option value="Orbitron">Orbitron</option>
           <option value="Bebas Neue">Bebas Neue</option>
           <option value="Righteous">Righteous</option>
@@ -40,7 +39,6 @@
           <option value="Press Start 2P">Press Start 2P</option>
           <option value="Bungee">Bungee</option>
           <option value="Arial">Arial</option>
-          <!-- Extra storytelling/cursive fonts -->
           <option value="Pacifico">Pacifico</option>
           <option value="Great Vibes">Great Vibes</option>
           <option value="Dancing Script">Dancing Script</option>
@@ -89,10 +87,14 @@
     </div>
 
     <div class="input-group">
-      <label for="shadow">Shadow:</label>
-      <input type="checkbox" id="shadow" checked>
-      <label for="glow">Glow:</label>
-      <input type="checkbox" id="glow" checked>
+      <label for="shadow">
+        <input type="checkbox" id="shadow" checked>
+        Shadow
+      </label>
+      <label for="glow">
+        <input type="checkbox" id="glow" checked>
+        Glow
+      </label>
     </div>
 
     <div class="input-group">
@@ -109,7 +111,7 @@
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
-
