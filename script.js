@@ -25,47 +25,14 @@ let currentMode = 'text';
 
 // Cursive storytelling readable fonts
 const cursiveFonts = [
-  "Pacifico",
-  "Great Vibes", 
-  "Dancing Script",
-  "Allura",
-  "Playball",
-  "Satisfy",
-  "Parisienne",
-  "Cookie",
-  "Courgette",
-  "Kaushan Script",
-  "Caveat",
-  "Indie Flower",
-  "Shadows Into Light",
-  "Amatic SC",
-  "Patrick Hand",
-  "Architects Daughter",
-  "Homemade Apple",
-  "Nothing You Could Do",
-  "Covered By Your Grace",
-  "Reenie Beanie",
-  "Gloria Hallelujah",
-  "Schoolbell",
-  "Coming Soon",
-  "Sue Ellen Francisco",
-  "Marck Script",
-  "Damion",
-  "Sacramento",
-  "Tangerine",
-  "Pinyon Script",
-  "Italianno",
-  "Yesteryear",
-  "Euphoria Script",
-  "Aguafina Script",
-  "Engagement",
-  "Mea Culpa",
-  "Meie Script",
-  "Mr De Haviland",
-  "Mr Dafoe",
-  "Mrs Saint Delafield",
-  "Rouge Script",
-  "Herr Von Muellerhoff"
+  "Pacifico", "Great Vibes", "Dancing Script", "Allura", "Playball", "Satisfy",
+  "Parisienne", "Cookie", "Courgette", "Kaushan Script", "Caveat", "Indie Flower",
+  "Shadows Into Light", "Amatic SC", "Patrick Hand", "Architects Daughter",
+  "Homemade Apple", "Nothing You Could Do", "Covered By Your Grace", "Reenie Beanie",
+  "Gloria Hallelujah", "Schoolbell", "Coming Soon", "Sue Ellen Francisco", "Marck Script",
+  "Damion", "Sacramento", "Tangerine", "Pinyon Script", "Italianno", "Yesteryear",
+  "Euphoria Script", "Aguafina Script", "Engagement", "Mea Culpa", "Meie Script",
+  "Mr De Haviland", "Mr Dafoe", "Mrs Saint Delafield", "Rouge Script", "Herr Von Muellerhoff"
 ];
 
 // Font flicker state
@@ -147,26 +114,19 @@ function resetFontFlicker() {
 
 // Get next font for flicker (never repeats until all fonts are used)
 function getNextFlickerFont() {
-  // If no fonts available, reset the cycle
   if (fontFlickerState.availableFonts.length === 0) {
     fontFlickerState.availableFonts = [...cursiveFonts];
     fontFlickerState.usedFonts = [];
   }
-  
-  // Pick random font from available fonts
   const randomIndex = Math.floor(Math.random() * fontFlickerState.availableFonts.length);
   const selectedFont = fontFlickerState.availableFonts[randomIndex];
-  
-  // Move font from available to used
   fontFlickerState.availableFonts.splice(randomIndex, 1);
   fontFlickerState.usedFonts.push(selectedFont);
   fontFlickerState.currentFont = selectedFont;
-  
   return selectedFont;
 }
 
 function drawFrame(progress, flickerFont = null) {
-  // Clear canvas with green screen background
   ctx.fillStyle = "#00ff00";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -178,8 +138,6 @@ function drawFrame(progress, flickerFont = null) {
     ctx.font = `bold 150px "${currentFontFamily}"`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    
-    // Reset shadows
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
@@ -202,33 +160,18 @@ function drawFrame(progress, flickerFont = null) {
     let y = canvas.height / 2;
 
     switch (animationStyle.value) {
-      case "top":
-        y = canvas.height / 2 - (1 - ease) * 500;
-        break;
-      case "bottom":
-        y = canvas.height / 2 + (1 - ease) * 500;
-        break;
-      case "left":
-        x = canvas.width / 2 - (1 - ease) * 700;
-        break;
-      case "right":
-        x = canvas.width / 2 + (1 - ease) * 700;
-        break;
-      case "zoom":
+      case "top": y -= (1 - ease) * 500; break;
+      case "bottom": y += (1 - ease) * 500; break;
+      case "left": x -= (1 - ease) * 700; break;
+      case "right": x += (1 - ease) * 700; break;
+      case "zoom": 
         ctx.save();
-        const scale = 0.5 + ease * 0.5;
         ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.scale(scale, scale);
+        ctx.scale(0.5 + ease * 0.5, 0.5 + ease * 0.5);
         ctx.fillText(text, 0, 0);
         ctx.restore();
         return;
-      case "fade":
-        ctx.globalAlpha = ease;
-        break;
-      case "none":
-      case "fontflicker":
-        // No position animation for these
-        break;
+      case "fade": ctx.globalAlpha = ease; break;
     }
 
     ctx.fillText(text, x, y);
@@ -236,48 +179,26 @@ function drawFrame(progress, flickerFont = null) {
   } else if (uploadedImage) {
     const maxSize = 600;
     const imgAspect = uploadedImage.width / uploadedImage.height;
-    let width = maxSize;
-    let height = maxSize;
-    
-    if (imgAspect > 1) {
-      height = maxSize / imgAspect;
-    } else {
-      width = maxSize * imgAspect;
-    }
+    let width = maxSize, height = maxSize;
+    if (imgAspect > 1) height = maxSize / imgAspect;
+    else width = maxSize * imgAspect;
 
-    const xCenter = canvas.width / 2 - width / 2;
-    const yCenter = canvas.height / 2 - height / 2;
-
-    let x = xCenter;
-    let y = yCenter;
+    let x = canvas.width / 2 - width / 2;
+    let y = canvas.height / 2 - height / 2;
 
     switch (animationStyle.value) {
-      case "top":
-        y = yCenter - (1 - ease) * 500;
-        break;
-      case "bottom":
-        y = yCenter + (1 - ease) * 500;
-        break;
-      case "left":
-        x = xCenter - (1 - ease) * 700;
-        break;
-      case "right":
-        x = xCenter + (1 - ease) * 700;
-        break;
+      case "top": y -= (1 - ease) * 500; break;
+      case "bottom": y += (1 - ease) * 500; break;
+      case "left": x -= (1 - ease) * 700; break;
+      case "right": x += (1 - ease) * 700; break;
       case "zoom":
         ctx.save();
-        const scale = 0.5 + ease * 0.5;
         ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.scale(scale, scale);
+        ctx.scale(0.5 + ease * 0.5, 0.5 + ease * 0.5);
         ctx.drawImage(uploadedImage, -width / 2, -height / 2, width, height);
         ctx.restore();
         return;
-      case "fade":
-        ctx.globalAlpha = ease;
-        break;
-      case "none":
-        // No animation
-        break;
+      case "fade": ctx.globalAlpha = ease; break;
     }
 
     ctx.drawImage(uploadedImage, x, y, width, height);
@@ -285,6 +206,7 @@ function drawFrame(progress, flickerFont = null) {
   }
 }
 
+// Main render button
 renderBtn.addEventListener("click", async () => {
   if (currentMode === "image" && !uploadedImage) {
     status.textContent = "⚠️ Please upload an image first!";
@@ -298,52 +220,38 @@ renderBtn.addEventListener("click", async () => {
   try {
     const duration = parseFloat(durationInput.value);
     const fps = 30;
-    
-    // Check MediaRecorder support
-    const mimeTypes = [
-      'video/webm;codecs=vp9',
-      'video/webm;codecs=vp8',
-      'video/webm',
-      'video/mp4'
-    ];
-    
-    let selectedMimeType = null;
-    for (const mimeType of mimeTypes) {
-      if (MediaRecorder.isTypeSupported(mimeType)) {
-        selectedMimeType = mimeType;
-        break;
-      }
-    }
-
-    if (!selectedMimeType) {
-      throw new Error('No supported video format found');
-    }
 
     const stream = canvas.captureStream(fps);
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: selectedMimeType,
-      videoBitsPerSecond: 5000000
-    });
-
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 5000000 });
     const chunks = [];
-    
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        chunks.push(e.data);
-      }
-    };
 
-    mediaRecorder.onstop = () => {
-      videoBlob = new Blob(chunks, { type: selectedMimeType });
-      const url = URL.createObjectURL(videoBlob);
-      downloadBtn.href = url;
-      
-      // Set appropriate file extension
-      const extension = selectedMimeType.includes('mp4') ? 'mp4' : 'webm';
-      downloadBtn.download = `animation.${extension}`;
-      downloadBtn.style.display = "inline-block";
-      status.textContent = "✓ Video ready! Click to download.";
-      renderBtn.disabled = false;
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+    mediaRecorder.onstop = async () => {
+      status.textContent = "⚙️ Converting to MP4...";
+
+      try {
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        const ffmpeg = createFFmpeg({ log: true });
+        await ffmpeg.load();
+
+        ffmpeg.FS('writeFile', 'video.webm', await fetchFile(new Blob(chunks, { type: 'video/webm' })));
+        await ffmpeg.run('-i', 'video.webm', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', 'output.mp4');
+
+        const data = ffmpeg.FS('readFile', 'output.mp4');
+        const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
+        const url = URL.createObjectURL(mp4Blob);
+
+        downloadBtn.href = url;
+        downloadBtn.download = 'animation.mp4';
+        downloadBtn.style.display = "inline-block";
+        status.textContent = "✓ MP4 ready! Click to download.";
+        renderBtn.disabled = false;
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ MP4 conversion failed!";
+        renderBtn.disabled = false;
+      }
     };
 
     mediaRecorder.onerror = (e) => {
@@ -352,13 +260,10 @@ renderBtn.addEventListener("click", async () => {
       renderBtn.disabled = false;
     };
 
-    // Start recording
-    mediaRecorder.start(100); // Collect data every 100ms
+    mediaRecorder.start(100);
 
     if (animationStyle.value === "fontflicker") {
-      // Reset font flicker state for new video
       resetFontFlicker();
-      
       const flickerSpeed = parseInt(flickerSpeedInput.value);
       const totalDuration = duration * 1000;
       let elapsed = 0;
@@ -373,20 +278,14 @@ renderBtn.addEventListener("click", async () => {
           setTimeout(() => mediaRecorder.stop(), 500);
           return;
         }
-
-        // Get next unique font
         const nextFont = getNextFlickerFont();
         drawFrame(1, nextFont);
-        
         elapsed += flickerSpeed;
         flickerCount++;
-        
-        // Update status with current font and progress
         status.textContent = `⚡ Font: "${nextFont}" (${flickerCount}/${totalFlickers})`;
       }, flickerSpeed);
 
     } else {
-      // Regular animation
       const totalFrames = duration * fps;
       let currentFrame = 0;
 
@@ -396,12 +295,8 @@ renderBtn.addEventListener("click", async () => {
           setTimeout(() => mediaRecorder.stop(), 500);
           return;
         }
-
-        const progress = currentFrame / totalFrames;
-        drawFrame(progress);
+        drawFrame(currentFrame / totalFrames);
         currentFrame++;
-        
-        // Update status
         const percent = Math.round((currentFrame / totalFrames) * 100);
         status.textContent = `⚙️ Generating video... ${percent}%`;
       }, 1000 / fps);
