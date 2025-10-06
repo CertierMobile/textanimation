@@ -1,7 +1,6 @@
 const canvas = document.getElementById("preview");
 const ctx = canvas.getContext("2d");
 const renderBtn = document.getElementById("renderBtn");
-const modeSelect = document.getElementById("mode");
 const textOptions = document.getElementById("textOptions");
 const imageOptions = document.getElementById("imageOptions");
 const textInput = document.getElementById("textInput");
@@ -11,17 +10,18 @@ const durationInput = document.getElementById("duration");
 const textColor = document.getElementById("textColor");
 const shadowCheckbox = document.getElementById("shadow");
 const glowCheckbox = document.getElementById("glow");
-const soundUpload = document.getElementById("soundUpload");
 const downloadBtn = document.getElementById("downloadBtn");
 const status = document.getElementById("status");
 const flickerSpeedGroup = document.getElementById("flickerSpeedGroup");
 const flickerSpeedInput = document.getElementById("flickerSpeed");
+const imageDropZone = document.getElementById("imageDropZone");
+const imageUpload = document.getElementById("imageUpload");
 
 canvas.width = 1920;
 canvas.height = 1080;
 let uploadedImage = null;
-let uploadedSound = null;
 let videoBlob = null;
+let currentMode = 'text';
 
 const flickerFonts = [
   "Pacifico","Great Vibes","Dancing Script","Allura","Playball","Satisfy","Parisienne",
@@ -34,13 +34,58 @@ const flickerFonts = [
   "Mr De Haviland","Mr Dafoe","Mrs Saint Delafield","Rouge Script","Herr Von Muellerhoff"
 ];
 
-modeSelect.addEventListener("change", () => {
-  if (modeSelect.value === "image") {
-    textOptions.style.display = "none";
-    imageOptions.style.display = "block";
-  } else {
-    textOptions.style.display = "block";
-    imageOptions.style.display = "none";
+// Mode switching
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    currentMode = mode;
+    
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    if (mode === 'image') {
+      textOptions.classList.add('hidden');
+      imageOptions.classList.remove('hidden');
+    } else {
+      textOptions.classList.remove('hidden');
+      imageOptions.classList.add('hidden');
+    }
+  });
+});
+
+// Image upload
+imageUpload.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const img = new Image();
+  img.onload = () => {
+    uploadedImage = img;
+    imageDropZone.classList.add('has-file');
+    imageDropZone.querySelector('.upload-text').textContent = file.name;
+    status.textContent = "✓ Image loaded successfully!";
+  };
+  img.src = URL.createObjectURL(file);
+});
+
+// Drag and drop
+imageDropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  imageDropZone.style.borderColor = '#00ffff';
+});
+
+imageDropZone.addEventListener('dragleave', () => {
+  imageDropZone.style.borderColor = 'rgba(0, 255, 255, 0.3)';
+});
+
+imageDropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  imageDropZone.style.borderColor = 'rgba(0, 255, 255, 0.3)';
+  
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    imageUpload.files = e.dataTransfer.files;
+    imageUpload.dispatchEvent(new Event('change'));
   }
 });
 
@@ -52,32 +97,13 @@ animationStyle.addEventListener("change", () => {
   }
 });
 
-document.getElementById("imageUpload").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const img = new Image();
-  img.onload = () => {
-    uploadedImage = img;
-    status.textContent = "Image loaded!";
-  };
-  img.src = URL.createObjectURL(file);
-});
-
-soundUpload.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    uploadedSound = URL.createObjectURL(file);
-    status.textContent = "Audio loaded!";
-  }
-});
-
 function drawFrame(progress, flickerFont = null) {
   ctx.fillStyle = "#00ff00";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const ease = 1 - Math.pow(1 - progress, 3);
 
-  if (modeSelect.value === "text") {
+  if (currentMode === "text") {
     const text = textInput.value || "Sample Text";
     ctx.font = `bold 150px "${flickerFont || fontStyle.value}"`;
     ctx.textAlign = "center";
@@ -132,9 +158,19 @@ function drawFrame(progress, flickerFont = null) {
     ctx.fillText(text, x, y);
     ctx.globalAlpha = 1;
   } else if (uploadedImage) {
-    const size = 400;
-    const xCenter = canvas.width / 2 - size / 2;
-    const yCenter = canvas.height / 2 - size / 2;
+    const maxSize = 600;
+    const imgAspect = uploadedImage.width / uploadedImage.height;
+    let width = maxSize;
+    let height = maxSize;
+    
+    if (imgAspect > 1) {
+      height = maxSize / imgAspect;
+    } else {
+      width = maxSize * imgAspect;
+    }
+
+    const xCenter = canvas.width / 2 - width / 2;
+    const yCenter = canvas.height / 2 - height / 2;
 
     let x = xCenter;
     let y = yCenter;
@@ -157,7 +193,7 @@ function drawFrame(progress, flickerFont = null) {
         const scale = 0.5 + ease * 0.5;
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.scale(scale, scale);
-        ctx.drawImage(uploadedImage, -size / 2, -size / 2, size, size);
+        ctx.drawImage(uploadedImage, -width / 2, -height / 2, width, height);
         ctx.restore();
         return;
       case "fade":
@@ -165,19 +201,19 @@ function drawFrame(progress, flickerFont = null) {
         break;
     }
 
-    ctx.drawImage(uploadedImage, x, y, size, size);
+    ctx.drawImage(uploadedImage, x, y, width, height);
     ctx.globalAlpha = 1;
   }
 }
 
 renderBtn.addEventListener("click", async () => {
-  if (modeSelect.value === "image" && !uploadedImage) {
-    status.textContent = "Please upload an image first!";
+  if (currentMode === "image" && !uploadedImage) {
+    status.textContent = "⚠️ Please upload an image first!";
     return;
   }
 
   renderBtn.disabled = true;
-  status.textContent = "Generating video...";
+  status.textContent = "⚙️ Generating video...";
   downloadBtn.style.display = "none";
 
   try {
@@ -201,7 +237,7 @@ renderBtn.addEventListener("click", async () => {
       downloadBtn.href = URL.createObjectURL(videoBlob);
       downloadBtn.download = 'animation.webm';
       downloadBtn.style.display = "inline-block";
-      status.textContent = "Video ready! Click download.";
+      status.textContent = "✓ Video ready! Click to download.";
       renderBtn.disabled = false;
     };
 
@@ -235,7 +271,7 @@ renderBtn.addEventListener("click", async () => {
     mediaRecorder.stop();
 
   } catch (error) {
-    status.textContent = "Error: " + error.message;
+    status.textContent = "❌ Error: " + error.message;
     renderBtn.disabled = false;
   }
 });
