@@ -23,16 +23,57 @@ let uploadedImage = null;
 let videoBlob = null;
 let currentMode = 'text';
 
-const flickerFonts = [
-  "Pacifico","Great Vibes","Dancing Script","Allura","Playball","Satisfy","Parisienne",
-  "Cookie","Courgette","Kaushan Script","Permanent Marker","Caveat","Indie Flower",
-  "Shadows Into Light","Amatic SC","Patrick Hand","Architects Daughter","Homemade Apple",
-  "Nothing You Could Do","Covered By Your Grace","Rock Salt","Reenie Beanie","Gloria Hallelujah",
-  "Schoolbell","Crafty Girls","Coming Soon","Walter Turncoat","Sue Ellen Francisco",
-  "Marck Script","Damion","Sacramento","Tangerine","Pinyon Script","Italianno",
-  "Yesteryear","Euphoria Script","Aguafina Script","Engagement","Mea Culpa","Meie Script",
-  "Mr De Haviland","Mr Dafoe","Mrs Saint Delafield","Rouge Script","Herr Von Muellerhoff"
+// Cursive storytelling readable fonts
+const cursiveFonts = [
+  "Pacifico",
+  "Great Vibes", 
+  "Dancing Script",
+  "Allura",
+  "Playball",
+  "Satisfy",
+  "Parisienne",
+  "Cookie",
+  "Courgette",
+  "Kaushan Script",
+  "Caveat",
+  "Indie Flower",
+  "Shadows Into Light",
+  "Amatic SC",
+  "Patrick Hand",
+  "Architects Daughter",
+  "Homemade Apple",
+  "Nothing You Could Do",
+  "Covered By Your Grace",
+  "Reenie Beanie",
+  "Gloria Hallelujah",
+  "Schoolbell",
+  "Coming Soon",
+  "Sue Ellen Francisco",
+  "Marck Script",
+  "Damion",
+  "Sacramento",
+  "Tangerine",
+  "Pinyon Script",
+  "Italianno",
+  "Yesteryear",
+  "Euphoria Script",
+  "Aguafina Script",
+  "Engagement",
+  "Mea Culpa",
+  "Meie Script",
+  "Mr De Haviland",
+  "Mr Dafoe",
+  "Mrs Saint Delafield",
+  "Rouge Script",
+  "Herr Von Muellerhoff"
 ];
+
+// Font flicker state
+let fontFlickerState = {
+  availableFonts: [...cursiveFonts],
+  usedFonts: [],
+  currentFont: null
+};
 
 // Mode switching
 document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -97,6 +138,33 @@ animationStyle.addEventListener("change", () => {
   }
 });
 
+// Reset font flicker state
+function resetFontFlicker() {
+  fontFlickerState.availableFonts = [...cursiveFonts];
+  fontFlickerState.usedFonts = [];
+  fontFlickerState.currentFont = null;
+}
+
+// Get next font for flicker (never repeats until all fonts are used)
+function getNextFlickerFont() {
+  // If no fonts available, reset the cycle
+  if (fontFlickerState.availableFonts.length === 0) {
+    fontFlickerState.availableFonts = [...cursiveFonts];
+    fontFlickerState.usedFonts = [];
+  }
+  
+  // Pick random font from available fonts
+  const randomIndex = Math.floor(Math.random() * fontFlickerState.availableFonts.length);
+  const selectedFont = fontFlickerState.availableFonts[randomIndex];
+  
+  // Move font from available to used
+  fontFlickerState.availableFonts.splice(randomIndex, 1);
+  fontFlickerState.usedFonts.push(selectedFont);
+  fontFlickerState.currentFont = selectedFont;
+  
+  return selectedFont;
+}
+
 function drawFrame(progress, flickerFont = null) {
   // Clear canvas with green screen background
   ctx.fillStyle = "#00ff00";
@@ -106,7 +174,8 @@ function drawFrame(progress, flickerFont = null) {
 
   if (currentMode === "text") {
     const text = textInput.value || "Sample Text";
-    ctx.font = `bold 150px "${flickerFont || fontStyle.value}"`;
+    const currentFontFamily = flickerFont || fontStyle.value;
+    ctx.font = `bold 150px "${currentFontFamily}"`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     
@@ -158,7 +227,7 @@ function drawFrame(progress, flickerFont = null) {
         break;
       case "none":
       case "fontflicker":
-        // No position animation
+        // No position animation for these
         break;
     }
 
@@ -253,7 +322,7 @@ renderBtn.addEventListener("click", async () => {
     const stream = canvas.captureStream(fps);
     const mediaRecorder = new MediaRecorder(stream, {
       mimeType: selectedMimeType,
-      videoBitsPerSecoding: 5000000
+      videoBitsPerSecond: 5000000
     });
 
     const chunks = [];
@@ -287,11 +356,16 @@ renderBtn.addEventListener("click", async () => {
     mediaRecorder.start(100); // Collect data every 100ms
 
     if (animationStyle.value === "fontflicker") {
-      // Font flicker animation
+      // Reset font flicker state for new video
+      resetFontFlicker();
+      
       const flickerSpeed = parseInt(flickerSpeedInput.value);
       const totalDuration = duration * 1000;
       let elapsed = 0;
-      let lastFont = null;
+      let flickerCount = 0;
+      const totalFlickers = Math.floor(totalDuration / flickerSpeed);
+
+      status.textContent = `⚡ Font flickering... 0/${totalFlickers}`;
 
       const flickerInterval = setInterval(() => {
         if (elapsed >= totalDuration) {
@@ -300,14 +374,15 @@ renderBtn.addEventListener("click", async () => {
           return;
         }
 
-        let randomFont;
-        do {
-          randomFont = flickerFonts[Math.floor(Math.random() * flickerFonts.length)];
-        } while (randomFont === lastFont && flickerFonts.length > 1);
+        // Get next unique font
+        const nextFont = getNextFlickerFont();
+        drawFrame(1, nextFont);
         
-        lastFont = randomFont;
-        drawFrame(1, randomFont);
         elapsed += flickerSpeed;
+        flickerCount++;
+        
+        // Update status with current font and progress
+        status.textContent = `⚡ Font: "${nextFont}" (${flickerCount}/${totalFlickers})`;
       }, flickerSpeed);
 
     } else {
