@@ -12,53 +12,97 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
-.wrap {
+.container {
+  background: rgba(25, 25, 25, 0.9);
+  border-radius: 20px;
+  padding: 30px 40px;
+  max-width: 700px;
+  width: 100%;
   text-align: center;
-  width: 90%;
-  max-width: 900px;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
 }
 
 h1 {
+  margin-bottom: 25px;
+  font-size: 2em;
+  color: #38ef7d;
+}
+
+.input-group {
   margin-bottom: 20px;
+  text-align: left;
 }
 
-.controls {
-  background: #1a1f25;
-  padding: 15px;
-  border-radius: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 15px;
-}
-
-.controls label {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-}
-
-button {
-  margin-top: 15px;
-  background: #00bcd4;
-  border: none;
-  padding: 10px 25px;
-  border-radius: 8px;
-  color: #fff;
-  cursor: pointer;
+label {
   font-weight: 600;
-  transition: 0.2s;
+  font-size: 1em;
+  display: block;
+  margin-bottom: 8px;
 }
 
-button:hover {
-  background: #0098a8;
+input[type="text"],
+input[type="number"],
+input[type="file"],
+select,
+input[type="color"] {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 1em;
+  background: #1c1f26;
+  color: white;
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid #38ef7d;
+}
+
+.btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  margin-top: 10px;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(56, 239, 125, 0.4);
+}
+
+.download-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: none;
+}
+
+.preview-container {
+  margin-top: 25px;
+  border: 3px solid #38ef7d;
+  border-radius: 15px;
+  overflow: hidden;
+  background: #00ff00;
 }
 
 #preview {
   width: 100%;
-  margin-top: 25px;
-  background: #111;
-  border-radius: 10px;
+  height: 400px;
+  display: block;
+  background: #00ff00;
+}
+
+.status {
+  text-align: center;
+  margin-top: 10px;
+  font-weight: 600;
 }
