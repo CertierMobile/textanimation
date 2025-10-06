@@ -20,52 +20,37 @@ const imageUpload = document.getElementById("imageUpload");
 canvas.width = 1920;
 canvas.height = 1080;
 let uploadedImage = null;
-let videoBlob = null;
 let currentMode = 'text';
 
-// Cursive storytelling readable fonts
+// Cursive fonts for flicker effect
 const cursiveFonts = [
-  "Pacifico", "Great Vibes", "Dancing Script", "Allura", "Playball", "Satisfy",
-  "Parisienne", "Cookie", "Courgette", "Kaushan Script", "Caveat", "Indie Flower",
-  "Shadows Into Light", "Amatic SC", "Patrick Hand", "Architects Daughter",
-  "Homemade Apple", "Nothing You Could Do", "Covered By Your Grace", "Reenie Beanie",
-  "Gloria Hallelujah", "Schoolbell", "Coming Soon", "Sue Ellen Francisco", "Marck Script",
-  "Damion", "Sacramento", "Tangerine", "Pinyon Script", "Italianno", "Yesteryear",
-  "Euphoria Script", "Aguafina Script", "Engagement", "Mea Culpa", "Meie Script",
-  "Mr De Haviland", "Mr Dafoe", "Mrs Saint Delafield", "Rouge Script", "Herr Von Muellerhoff"
+  "Pacifico","Great Vibes","Dancing Script","Allura","Playball","Satisfy",
+  "Parisienne","Cookie","Courgette","Kaushan Script","Caveat","Indie Flower",
+  "Shadows Into Light","Amatic SC","Patrick Hand","Architects Daughter",
+  "Homemade Apple","Nothing You Could Do","Covered By Your Grace","Reenie Beanie",
+  "Gloria Hallelujah","Schoolbell","Coming Soon","Sue Ellen Francisco","Marck Script",
+  "Damion","Sacramento","Tangerine","Pinyon Script","Italianno","Yesteryear",
+  "Euphoria Script","Aguafina Script","Engagement","Mea Culpa","Meie Script",
+  "Mr De Haviland","Mr Dafoe","Mrs Saint Delafield","Rouge Script","Herr Von Muellerhoff"
 ];
 
-// Font flicker state
-let fontFlickerState = {
-  availableFonts: [...cursiveFonts],
-  usedFonts: [],
-  currentFont: null
-};
+let fontFlickerState = { availableFonts: [...cursiveFonts], usedFonts: [], currentFont: null };
 
 // Mode switching
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const mode = btn.dataset.mode;
-    currentMode = mode;
-    
+    currentMode = btn.dataset.mode;
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    
-    if (mode === 'image') {
-      textOptions.classList.add('hidden');
-      imageOptions.classList.remove('hidden');
-    } else {
-      textOptions.classList.remove('hidden');
-      imageOptions.classList.add('hidden');
-    }
+    textOptions.classList.toggle('hidden', currentMode === 'image');
+    imageOptions.classList.toggle('hidden', currentMode === 'text');
   });
 });
 
 // Image upload
-imageUpload.addEventListener("change", (e) => {
+imageUpload.addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
-  
   const img = new Image();
   img.onload = () => {
     uploadedImage = img;
@@ -77,19 +62,11 @@ imageUpload.addEventListener("change", (e) => {
 });
 
 // Drag and drop
-imageDropZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  imageDropZone.style.borderColor = '#00ffff';
-});
-
-imageDropZone.addEventListener('dragleave', () => {
-  imageDropZone.style.borderColor = 'rgba(0, 255, 255, 0.3)';
-});
-
-imageDropZone.addEventListener('drop', (e) => {
+imageDropZone.addEventListener('dragover', e => { e.preventDefault(); imageDropZone.style.borderColor = '#00ffff'; });
+imageDropZone.addEventListener('dragleave', () => { imageDropZone.style.borderColor = 'rgba(0, 255, 255, 0.3)'; });
+imageDropZone.addEventListener('drop', e => {
   e.preventDefault();
   imageDropZone.style.borderColor = 'rgba(0, 255, 255, 0.3)';
-  
   const file = e.dataTransfer.files[0];
   if (file && file.type.startsWith('image/')) {
     imageUpload.files = e.dataTransfer.files;
@@ -97,35 +74,28 @@ imageDropZone.addEventListener('drop', (e) => {
   }
 });
 
+// Animation option changes
 animationStyle.addEventListener("change", () => {
-  if (animationStyle.value === "fontflicker") {
-    flickerSpeedGroup.style.display = "block";
-  } else {
-    flickerSpeedGroup.style.display = "none";
-  }
+  flickerSpeedGroup.style.display = animationStyle.value === "fontflicker" ? "block" : "none";
 });
 
-// Reset font flicker state
+// Font flicker helpers
 function resetFontFlicker() {
   fontFlickerState.availableFonts = [...cursiveFonts];
   fontFlickerState.usedFonts = [];
   fontFlickerState.currentFont = null;
 }
 
-// Get next font for flicker (never repeats until all fonts are used)
 function getNextFlickerFont() {
-  if (fontFlickerState.availableFonts.length === 0) {
-    fontFlickerState.availableFonts = [...cursiveFonts];
-    fontFlickerState.usedFonts = [];
-  }
-  const randomIndex = Math.floor(Math.random() * fontFlickerState.availableFonts.length);
-  const selectedFont = fontFlickerState.availableFonts[randomIndex];
-  fontFlickerState.availableFonts.splice(randomIndex, 1);
-  fontFlickerState.usedFonts.push(selectedFont);
-  fontFlickerState.currentFont = selectedFont;
-  return selectedFont;
+  if (fontFlickerState.availableFonts.length === 0) resetFontFlicker();
+  const idx = Math.floor(Math.random() * fontFlickerState.availableFonts.length);
+  const font = fontFlickerState.availableFonts.splice(idx, 1)[0];
+  fontFlickerState.usedFonts.push(font);
+  fontFlickerState.currentFont = font;
+  return font;
 }
 
+// Draw a single frame
 function drawFrame(progress, flickerFont = null) {
   ctx.fillStyle = "#00ff00";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -138,80 +108,51 @@ function drawFrame(progress, flickerFont = null) {
     ctx.font = `bold 150px "${currentFontFamily}"`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-
-    if (shadowCheckbox.checked) {
-      ctx.shadowColor = "rgba(0,0,0,0.6)";
-      ctx.shadowBlur = 15;
-      ctx.shadowOffsetX = 5;
-      ctx.shadowOffsetY = 5;
-    }
-
-    if (glowCheckbox.checked) {
-      ctx.shadowColor = textColor.value;
-      ctx.shadowBlur = 25;
-    }
-
+    ctx.shadowBlur = shadowCheckbox.checked ? 15 : 0;
+    ctx.shadowOffsetX = shadowCheckbox.checked ? 5 : 0;
+    ctx.shadowOffsetY = shadowCheckbox.checked ? 5 : 0;
+    ctx.shadowColor = glowCheckbox.checked ? textColor.value : "rgba(0,0,0,0.6)";
     ctx.fillStyle = textColor.value;
 
     let x = canvas.width / 2;
     let y = canvas.height / 2;
 
-    switch (animationStyle.value) {
+    switch(animationStyle.value){
       case "top": y -= (1 - ease) * 500; break;
       case "bottom": y += (1 - ease) * 500; break;
       case "left": x -= (1 - ease) * 700; break;
       case "right": x += (1 - ease) * 700; break;
-      case "zoom": 
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.scale(0.5 + ease * 0.5, 0.5 + ease * 0.5);
-        ctx.fillText(text, 0, 0);
-        ctx.restore();
-        return;
+      case "zoom": ctx.save(); ctx.translate(canvas.width/2, canvas.height/2); ctx.scale(0.5 + ease*0.5,0.5 + ease*0.5); ctx.fillText(text,0,0); ctx.restore(); return;
       case "fade": ctx.globalAlpha = ease; break;
     }
-
     ctx.fillText(text, x, y);
     ctx.globalAlpha = 1;
   } else if (uploadedImage) {
     const maxSize = 600;
-    const imgAspect = uploadedImage.width / uploadedImage.height;
+    const aspect = uploadedImage.width / uploadedImage.height;
     let width = maxSize, height = maxSize;
-    if (imgAspect > 1) height = maxSize / imgAspect;
-    else width = maxSize * imgAspect;
+    if (aspect > 1) height = maxSize / aspect;
+    else width = maxSize * aspect;
 
-    let x = canvas.width / 2 - width / 2;
-    let y = canvas.height / 2 - height / 2;
+    let x = canvas.width / 2 - width/2;
+    let y = canvas.height / 2 - height/2;
 
-    switch (animationStyle.value) {
+    switch(animationStyle.value){
       case "top": y -= (1 - ease) * 500; break;
       case "bottom": y += (1 - ease) * 500; break;
       case "left": x -= (1 - ease) * 700; break;
       case "right": x += (1 - ease) * 700; break;
-      case "zoom":
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.scale(0.5 + ease * 0.5, 0.5 + ease * 0.5);
-        ctx.drawImage(uploadedImage, -width / 2, -height / 2, width, height);
-        ctx.restore();
-        return;
+      case "zoom": ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.scale(0.5+ease*0.5,0.5+ease*0.5); ctx.drawImage(uploadedImage,-width/2,-height/2,width,height); ctx.restore(); return;
       case "fade": ctx.globalAlpha = ease; break;
     }
-
-    ctx.drawImage(uploadedImage, x, y, width, height);
+    ctx.drawImage(uploadedImage,x,y,width,height);
     ctx.globalAlpha = 1;
   }
 }
 
-// Main render button
+// Main render
 renderBtn.addEventListener("click", async () => {
-  if (currentMode === "image" && !uploadedImage) {
-    status.textContent = "⚠️ Please upload an image first!";
-    return;
-  }
+  if (currentMode === "image" && !uploadedImage) { status.textContent = "⚠️ Upload an image first!"; return; }
 
   renderBtn.disabled = true;
   status.textContent = "⚙️ Generating video...";
@@ -220,26 +161,23 @@ renderBtn.addEventListener("click", async () => {
   try {
     const duration = parseFloat(durationInput.value);
     const fps = 30;
-
     const stream = canvas.captureStream(fps);
-    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 5000000 });
+    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 5000000 });
     const chunks = [];
+    recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
 
-    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-
-    mediaRecorder.onstop = async () => {
+    recorder.onstop = async () => {
       status.textContent = "⚙️ Converting to MP4...";
-
       try {
         const { createFFmpeg, fetchFile } = FFmpeg;
         const ffmpeg = createFFmpeg({ log: true });
         await ffmpeg.load();
 
-        ffmpeg.FS('writeFile', 'video.webm', await fetchFile(new Blob(chunks, { type: 'video/webm' })));
-        await ffmpeg.run('-i', 'video.webm', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', 'output.mp4');
+        ffmpeg.FS('writeFile','video.webm',await fetchFile(new Blob(chunks,{type:'video/webm'})));
+        await ffmpeg.run('-i','video.webm','-c:v','libx264','-pix_fmt','yuv420p','output.mp4');
 
-        const data = ffmpeg.FS('readFile', 'output.mp4');
-        const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
+        const data = ffmpeg.FS('readFile','output.mp4');
+        const mp4Blob = new Blob([data.buffer], {type:'video/mp4'});
         const url = URL.createObjectURL(mp4Blob);
 
         downloadBtn.href = url;
@@ -247,65 +185,45 @@ renderBtn.addEventListener("click", async () => {
         downloadBtn.style.display = "inline-block";
         status.textContent = "✓ MP4 ready! Click to download.";
         renderBtn.disabled = false;
-      } catch (err) {
+      } catch(err){
         console.error(err);
         status.textContent = "❌ MP4 conversion failed!";
         renderBtn.disabled = false;
       }
     };
 
-    mediaRecorder.onerror = (e) => {
-      console.error('MediaRecorder error:', e);
-      status.textContent = "❌ Recording error occurred";
-      renderBtn.disabled = false;
-    };
+    recorder.start(100);
 
-    mediaRecorder.start(100);
-
-    if (animationStyle.value === "fontflicker") {
+    if(animationStyle.value==="fontflicker"){
       resetFontFlicker();
       const flickerSpeed = parseInt(flickerSpeedInput.value);
-      const totalDuration = duration * 1000;
-      let elapsed = 0;
-      let flickerCount = 0;
-      const totalFlickers = Math.floor(totalDuration / flickerSpeed);
+      const totalDuration = duration*1000;
+      let elapsed=0;
+      const totalFlickers = Math.floor(totalDuration/flickerSpeed);
 
-      status.textContent = `⚡ Font flickering... 0/${totalFlickers}`;
-
-      const flickerInterval = setInterval(() => {
-        if (elapsed >= totalDuration) {
-          clearInterval(flickerInterval);
-          setTimeout(() => mediaRecorder.stop(), 500);
-          return;
-        }
+      status.textContent=`⚡ Font flickering... 0/${totalFlickers}`;
+      const interval = setInterval(()=>{
+        if(elapsed>=totalDuration){ clearInterval(interval); setTimeout(()=>recorder.stop(),500); return; }
         const nextFont = getNextFlickerFont();
-        drawFrame(1, nextFont);
-        elapsed += flickerSpeed;
-        flickerCount++;
-        status.textContent = `⚡ Font: "${nextFont}" (${flickerCount}/${totalFlickers})`;
-      }, flickerSpeed);
-
+        drawFrame(1,nextFont);
+        elapsed+=flickerSpeed;
+        status.textContent=`⚡ Font: "${nextFont}" (${Math.floor(elapsed/flickerSpeed)}/${totalFlickers})`;
+      },flickerSpeed);
     } else {
-      const totalFrames = duration * fps;
+      const totalFrames = duration*fps;
       let currentFrame = 0;
-
-      const animationInterval = setInterval(() => {
-        if (currentFrame >= totalFrames) {
-          clearInterval(animationInterval);
-          setTimeout(() => mediaRecorder.stop(), 500);
-          return;
-        }
-        drawFrame(currentFrame / totalFrames);
+      const interval = setInterval(()=>{
+        if(currentFrame>=totalFrames){ clearInterval(interval); setTimeout(()=>recorder.stop(),500); return; }
+        drawFrame(currentFrame/totalFrames);
         currentFrame++;
-        const percent = Math.round((currentFrame / totalFrames) * 100);
-        status.textContent = `⚙️ Generating video... ${percent}%`;
-      }, 1000 / fps);
+        status.textContent=`⚙️ Generating video... ${Math.round((currentFrame/totalFrames)*100)}%`;
+      },1000/fps);
     }
 
-  } catch (error) {
-    console.error('Video generation error:', error);
-    status.textContent = "❌ Error: " + error.message;
-    renderBtn.disabled = false;
+  } catch(error){
+    console.error(error);
+    status.textContent="❌ Error: "+error.message;
+    renderBtn.disabled=false;
   }
 });
 
