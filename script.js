@@ -24,7 +24,7 @@ canvas.height = 1080;
 let uploadedImage = null;
 let uploadedSound = null;
 
-// Sample list of fonts for flicker
+// Fonts for flicker
 const flickerFonts = [
   "Pacifico","Great Vibes","Dancing Script","Allura","Playball","Satisfy","Parisienne",
   "Merriweather","Cinzel","Roboto","Open Sans","Lora","Quicksand","Raleway","Roboto Slab",
@@ -36,6 +36,7 @@ const flickerFonts = [
   "Lexend Giga","Lexend Peta","Lexend Tera","Lexend Zeta"
 ];
 
+// Mode toggle
 modeSelect.addEventListener("change", () => {
   if (modeSelect.value === "image") {
     textOptions.style.display = "none";
@@ -46,10 +47,12 @@ modeSelect.addEventListener("change", () => {
   }
 });
 
+// Show flicker speed only for Font Flicker
 animationStyle.addEventListener("change", () => {
   flickerSpeedGroup.style.display = animationStyle.value === "fontflicker" ? "block" : "none";
 });
 
+// Image upload
 document.getElementById("imageUpload")?.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -58,13 +61,14 @@ document.getElementById("imageUpload")?.addEventListener("change", (e) => {
   img.src = URL.createObjectURL(file);
 });
 
+// Sound upload
 soundUpload.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) uploadedSound = URL.createObjectURL(file);
 });
 
+// Draw frame
 function drawFrame(progress, currentFont = null) {
-  // Green background
   ctx.fillStyle = "#00ff00";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -104,16 +108,17 @@ function drawFrame(progress, currentFont = null) {
         ctx.restore();
         return;
       case "fade":
-        ctx.globalAlpha = ease; break;
+        ctx.globalAlpha = ease;
+        break;
     }
 
     ctx.fillText(text, x, y);
     ctx.globalAlpha = 1;
+
   } else if (uploadedImage) {
     const size = 400;
     const xCenter = canvas.width / 2 - size / 2;
     const yCenter = canvas.height / 2 - size / 2;
-
     let x = xCenter;
     let y = yCenter;
 
@@ -126,7 +131,7 @@ function drawFrame(progress, currentFont = null) {
         const scale = 0.5 + ease * 0.5;
         const imgW = size * scale;
         const imgH = size * scale;
-        ctx.drawImage(uploadedImage, canvas.width / 2 - imgW / 2, canvas.height / 2 - imgH / 2, imgW, imgH);
+        ctx.drawImage(uploadedImage, canvas.width/2-imgW/2, canvas.height/2-imgH/2, imgW, imgH);
         return;
       case "fade": ctx.globalAlpha = ease; break;
     }
@@ -136,16 +141,18 @@ function drawFrame(progress, currentFont = null) {
   }
 }
 
-renderBtn.addEventListener("click", async () => {
+// Render
+renderBtn.addEventListener("click", () => {
   status.textContent = "Rendering...";
+  downloadBtn.style.display = "none";
 
   const stream = canvas.captureStream(30);
-  let audioCtx, audioStream;
+  let audioStream;
 
   if (uploadedSound) {
     const audio = new Audio(uploadedSound);
     audio.crossOrigin = "anonymous";
-    audioCtx = new AudioContext();
+    const audioCtx = new AudioContext();
     const src = audioCtx.createMediaElementSource(audio);
     const dest = audioCtx.createMediaStreamDestination();
     src.connect(dest);
@@ -167,7 +174,7 @@ renderBtn.addEventListener("click", async () => {
     const url = URL.createObjectURL(blob);
     downloadBtn.href = url;
     downloadBtn.download = "animation.webm";
-    downloadBtn.style.display = "block";
+    downloadBtn.style.display = "inline-block";
     status.textContent = "Exported successfully!";
   };
 
@@ -176,8 +183,8 @@ renderBtn.addEventListener("click", async () => {
   const start = performance.now();
 
   if (animationStyle.value === "fontflicker") {
-    let lastTime = 0;
     const flickerSpeed = parseInt(flickerSpeedInput.value) || 100;
+    let lastTime = 0;
 
     function flickerAnimate(now) {
       const progress = Math.min((now - start) / duration, 1);
@@ -189,7 +196,9 @@ renderBtn.addEventListener("click", async () => {
       if (progress < 1) requestAnimationFrame(flickerAnimate);
       else recorder.stop();
     }
+
     requestAnimationFrame(flickerAnimate);
+
   } else {
     function animate(now) {
       const progress = Math.min((now - start) / duration, 1);
@@ -197,6 +206,7 @@ renderBtn.addEventListener("click", async () => {
       if (progress < 1) requestAnimationFrame(animate);
       else recorder.stop();
     }
+
     requestAnimationFrame(animate);
   }
 });
