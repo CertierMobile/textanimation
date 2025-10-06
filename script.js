@@ -1,3 +1,6 @@
+import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/ffmpeg.js';
+import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
+
 const canvas = document.getElementById("preview");
 const ctx = canvas.getContext("2d");
 const renderBtn = document.getElementById("renderBtn");
@@ -21,6 +24,38 @@ canvas.width = 1920;
 canvas.height = 1080;
 let uploadedImage = null;
 let currentMode = 'text';
+let ffmpeg = null;
+
+// Initialize FFmpeg
+async function initFFmpeg() {
+  if (ffmpeg) return ffmpeg;
+  
+  ffmpeg = new FFmpeg();
+  
+  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+  
+  ffmpeg.on('log', ({ message }) => {
+    console.log(message);
+  });
+  
+  ffmpeg.on('progress', ({ progress }) => {
+    if (progress > 0 && progress < 1) {
+      status.textContent = `🔄 Converting to MP4... ${Math.round(progress * 100)}%`;
+    }
+  });
+
+  try {
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    });
+    console.log('FFmpeg loaded successfully');
+    return ffmpeg;
+  } catch (error) {
+    console.error('Failed to load FFmpeg:', error);
+    throw error;
+  }
+}
 
 // Cursive fonts for flicker effect
 const cursiveFonts = [
@@ -62,8 +97,15 @@ imageUpload.addEventListener("change", e => {
 });
 
 // Drag and drop
-imageDropZone.addEventListener('dragover', e => { e.preventDefault(); imageDropZone.style.borderColor = '#00ffff'; });
-imageDropZone.addEventListener('dragleave', () => { imageDropZone.style.borderColor = 'rgba(0, 255, 255, 0.3)'; });
+imageDropZone.addEventListener('dragover', e => { 
+  e.preventDefault(); 
+  imageDropZone.style.borderColor = '#00ffff'; 
+});
+
+imageDropZone.addEventListener('dragleave', () => { 
+  imageDropZone.style.borderColor = 'rgba(0, 255, 255, 0.3)'; 
+});
+
 imageDropZone.addEventListener('drop', e => {
   e.preventDefault();
   imageDropZone.style.borderColor = 'rgba(0, 255, 255, 0.3)';
@@ -122,7 +164,13 @@ function drawFrame(progress, flickerFont = null) {
       case "bottom": y += (1 - ease) * 500; break;
       case "left": x -= (1 - ease) * 700; break;
       case "right": x += (1 - ease) * 700; break;
-      case "zoom": ctx.save(); ctx.translate(canvas.width/2, canvas.height/2); ctx.scale(0.5 + ease*0.5,0.5 + ease*0.5); ctx.fillText(text,0,0); ctx.restore(); return;
+      case "zoom": 
+        ctx.save(); 
+        ctx.translate(canvas.width/2, canvas.height/2); 
+        ctx.scale(0.5 + ease*0.5, 0.5 + ease*0.5); 
+        ctx.fillText(text, 0, 0); 
+        ctx.restore(); 
+        return;
       case "fade": ctx.globalAlpha = ease; break;
     }
     ctx.fillText(text, x, y);
@@ -142,88 +190,148 @@ function drawFrame(progress, flickerFont = null) {
       case "bottom": y += (1 - ease) * 500; break;
       case "left": x -= (1 - ease) * 700; break;
       case "right": x += (1 - ease) * 700; break;
-      case "zoom": ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.scale(0.5+ease*0.5,0.5+ease*0.5); ctx.drawImage(uploadedImage,-width/2,-height/2,width,height); ctx.restore(); return;
+      case "zoom": 
+        ctx.save(); 
+        ctx.translate(canvas.width/2, canvas.height/2); 
+        ctx.scale(0.5+ease*0.5, 0.5+ease*0.5); 
+        ctx.drawImage(uploadedImage, -width/2, -height/2, width, height); 
+        ctx.restore(); 
+        return;
       case "fade": ctx.globalAlpha = ease; break;
     }
-    ctx.drawImage(uploadedImage,x,y,width,height);
+    ctx.drawImage(uploadedImage, x, y, width, height);
     ctx.globalAlpha = 1;
   }
 }
 
-// Main render
+// Main render function
 renderBtn.addEventListener("click", async () => {
-  if (currentMode === "image" && !uploadedImage) { status.textContent = "⚠️ Upload an image first!"; return; }
+  if (currentMode === "image" && !uploadedImage) { 
+    status.textContent = "⚠️ Upload an image first!"; 
+    return; 
+  }
 
   renderBtn.disabled = true;
-  status.textContent = "⚙️ Generating video...";
+  status.textContent = "⚙️ Initializing FFmpeg...";
   downloadBtn.style.display = "none";
 
   try {
+    // Initialize FFmpeg
+    await initFFmpeg();
+    
+    status.textContent = "⚙️ Generating video...";
+    
     const duration = parseFloat(durationInput.value);
     const fps = 30;
+    
+    // Check for WebM support
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') 
+      ? 'video/webm;codecs=vp9' 
+      : 'video/webm';
+    
     const stream = canvas.captureStream(fps);
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 5000000 });
+    const recorder = new MediaRecorder(stream, { 
+      mimeType: mimeType, 
+      videoBitsPerSecond: 5000000 
+    });
+    
     const chunks = [];
-    recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+    recorder.ondataavailable = e => { 
+      if(e.data.size > 0) chunks.push(e.data); 
+    };
 
     recorder.onstop = async () => {
-      status.textContent = "⚙️ Converting to MP4...";
       try {
-        const { createFFmpeg, fetchFile } = FFmpeg;
-        const ffmpeg = createFFmpeg({ log: true });
-        await ffmpeg.load();
+        status.textContent = "🔄 Converting to MP4...";
+        
+        const webmBlob = new Blob(chunks, { type: 'video/webm' });
+        
+        // Write WebM file to FFmpeg filesystem
+        await ffmpeg.writeFile('input.webm', await fetchFile(webmBlob));
+        
+        // Convert WebM to MP4
+        await ffmpeg.exec([
+          '-i', 'input.webm',
+          '-c:v', 'libx264',
+          '-preset', 'fast',
+          '-crf', '23',
+          '-pix_fmt', 'yuv420p',
+          '-movflags', '+faststart',
+          'output.mp4'
+        ]);
 
-        ffmpeg.FS('writeFile','video.webm',await fetchFile(new Blob(chunks,{type:'video/webm'})));
-        await ffmpeg.run('-i','video.webm','-c:v','libx264','-pix_fmt','yuv420p','output.mp4');
-
-        const data = ffmpeg.FS('readFile','output.mp4');
-        const mp4Blob = new Blob([data.buffer], {type:'video/mp4'});
+        // Read the output file
+        const data = await ffmpeg.readFile('output.mp4');
+        const mp4Blob = new Blob([data], { type: 'video/mp4' });
         const url = URL.createObjectURL(mp4Blob);
 
         downloadBtn.href = url;
         downloadBtn.download = 'animation.mp4';
         downloadBtn.style.display = "inline-block";
-        status.textContent = "✓ MP4 ready! Click to download.";
-        renderBtn.disabled = false;
-      } catch(err){
-        console.error(err);
-        status.textContent = "❌ MP4 conversion failed!";
+        status.textContent = "✅ MP4 ready! Click to download.";
+        
+        // Clean up FFmpeg files
+        try {
+          await ffmpeg.deleteFile('input.webm');
+          await ffmpeg.deleteFile('output.mp4');
+        } catch (cleanupError) {
+          console.warn('Cleanup warning:', cleanupError);
+        }
+        
+      } catch(conversionError) {
+        console.error('Conversion error:', conversionError);
+        status.textContent = "❌ MP4 conversion failed! Check console for details.";
+      } finally {
         renderBtn.disabled = false;
       }
     };
 
     recorder.start(100);
 
-    if(animationStyle.value==="fontflicker"){
+    // Handle different animation types
+    if(animationStyle.value === "fontflicker") {
       resetFontFlicker();
       const flickerSpeed = parseInt(flickerSpeedInput.value);
-      const totalDuration = duration*1000;
-      let elapsed=0;
-      const totalFlickers = Math.floor(totalDuration/flickerSpeed);
+      const totalDuration = duration * 1000;
+      let elapsed = 0;
+      const totalFlickers = Math.floor(totalDuration / flickerSpeed);
 
-      status.textContent=`⚡ Font flickering... 0/${totalFlickers}`;
-      const interval = setInterval(()=>{
-        if(elapsed>=totalDuration){ clearInterval(interval); setTimeout(()=>recorder.stop(),500); return; }
+      status.textContent = `⚡ Font flickering... 0/${totalFlickers}`;
+      
+      const interval = setInterval(() => {
+        if(elapsed >= totalDuration) { 
+          clearInterval(interval); 
+          setTimeout(() => recorder.stop(), 500); 
+          return; 
+        }
+        
         const nextFont = getNextFlickerFont();
-        drawFrame(1,nextFont);
-        elapsed+=flickerSpeed;
-        status.textContent=`⚡ Font: "${nextFont}" (${Math.floor(elapsed/flickerSpeed)}/${totalFlickers})`;
-      },flickerSpeed);
+        drawFrame(1, nextFont);
+        elapsed += flickerSpeed;
+        status.textContent = `⚡ Font: "${nextFont}" (${Math.floor(elapsed/flickerSpeed)}/${totalFlickers})`;
+      }, flickerSpeed);
+      
     } else {
-      const totalFrames = duration*fps;
+      const totalFrames = duration * fps;
       let currentFrame = 0;
-      const interval = setInterval(()=>{
-        if(currentFrame>=totalFrames){ clearInterval(interval); setTimeout(()=>recorder.stop(),500); return; }
-        drawFrame(currentFrame/totalFrames);
+      
+      const interval = setInterval(() => {
+        if(currentFrame >= totalFrames) { 
+          clearInterval(interval); 
+          setTimeout(() => recorder.stop(), 500); 
+          return; 
+        }
+        
+        drawFrame(currentFrame / totalFrames);
         currentFrame++;
-        status.textContent=`⚙️ Generating video... ${Math.round((currentFrame/totalFrames)*100)}%`;
-      },1000/fps);
+        status.textContent = `⚙️ Generating video... ${Math.round((currentFrame/totalFrames)*100)}%`;
+      }, 1000/fps);
     }
 
-  } catch(error){
-    console.error(error);
-    status.textContent="❌ Error: "+error.message;
-    renderBtn.disabled=false;
+  } catch(error) {
+    console.error('Render error:', error);
+    status.textContent = "❌ Error: " + error.message;
+    renderBtn.disabled = false;
   }
 });
 
