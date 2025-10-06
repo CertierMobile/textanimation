@@ -169,7 +169,7 @@ function drawFrame(progress, flickerFont = null) {
   }
 }
 
-// Main render function - WebM only
+// Main render function - MP4 instead of WebM
 renderBtn.addEventListener("click", async () => {
   if (currentMode === "image" && !uploadedImage) { 
     status.textContent = "⚠️ Upload an image first!"; 
@@ -177,21 +177,34 @@ renderBtn.addEventListener("click", async () => {
   }
 
   renderBtn.disabled = true;
-  status.textContent = "⚙️ Generating WebM video...";
+  status.textContent = "⚙️ Generating MP4 video...";
   downloadBtn.style.display = "none";
 
   try {
     const duration = parseFloat(durationInput.value);
     const fps = 30;
     
-    // Try different WebM codecs for better compatibility
-    let mimeType = 'video/webm;codecs=vp9';
+    // Try MP4 codecs first, fall back to WebM if not supported
+    let mimeType = 'video/mp4;codecs=avc1.42E01E';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/mp4;codecs=avc1.428028';
+    }
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/mp4';
+    }
+    // Fallback to WebM if MP4 not supported
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/webm;codecs=vp9';
+    }
     if (!MediaRecorder.isTypeSupported(mimeType)) {
       mimeType = 'video/webm;codecs=vp8';
     }
     if (!MediaRecorder.isTypeSupported(mimeType)) {
       mimeType = 'video/webm';
     }
+    
+    const isMP4 = mimeType.includes('mp4');
+    const fileExtension = isMP4 ? 'mp4' : 'webm';
     
     const stream = canvas.captureStream(fps);
     const recorder = new MediaRecorder(stream, { 
@@ -205,13 +218,13 @@ renderBtn.addEventListener("click", async () => {
     };
 
     recorder.onstop = () => {
-      const webmBlob = new Blob(chunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(webmBlob);
+      const blob = new Blob(chunks, { type: mimeType });
+      const url = URL.createObjectURL(blob);
 
       downloadBtn.href = url;
-      downloadBtn.download = 'animation.webm';
+      downloadBtn.download = `animation.${fileExtension}`;
       downloadBtn.style.display = "inline-block";
-      status.textContent = "✅ WebM ready! Click to download.";
+      status.textContent = `✅ ${fileExtension.toUpperCase()} ready! Click to download.`;
       renderBtn.disabled = false;
     };
 
