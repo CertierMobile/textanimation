@@ -311,4 +311,29 @@ input[type="checkbox"] {
   h1 {
     font-size: 1.8em;
   }
+  
+  .container {
+    padding: 20px;
+  }
+  
+  .checkbox-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5em;
+  }
+  
+  .btn {
+    font-size: 1em;
+    padding: 14px;
+  }
+  
+  #preview {
+    height: 300px;
+  }
 }
